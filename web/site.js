@@ -1,0 +1,4 @@
+const symbols={r:'♜',n:'♞',b:'♝',q:'♛',k:'♚',p:'♟',R:'♜',N:'♞',B:'♝',Q:'♛',K:'♚',P:'♟'};
+const fen='r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R';
+for(const [rank,row] of fen.split('/').entries()){let file=0;for(const ch of row){const count=/\d/.test(ch)?Number(ch):1;for(let i=0;i<count;i++){const square=document.createElement('div');if((rank+file)%2)square.classList.add('dark');if(symbols[ch]){square.textContent=symbols[ch];if(ch===ch.toUpperCase())square.classList.add('white-piece');}document.getElementById('demo-board').append(square);file++;}}}
+document.getElementById('range-demo').addEventListener('input',event=>{const center=Number(event.target.value);document.getElementById('range-number').textContent=`${center-5}–${center+5}`;const loss=-3*Math.log(center/100);document.getElementById('range-example').textContent=`${center}% ≈ потеря ${loss.toFixed(2).replace('.',',')} пешки`;});

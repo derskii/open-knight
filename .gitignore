@@ -1,0 +1,7 @@
+node_modules/
+dist/
+artifacts/
+work/
+*.log
+work-lint.json
+vendor-source/*.tar.gz

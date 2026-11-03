@@ -1,0 +1,18 @@
+{
+  "name": "open-knight",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "license": "GPL-3.0-or-later",
+  "description": "Local-first open-source chess analysis for Firefox, powered by Stockfish 19",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "lint:extension": "node scripts/lint-extension.mjs",
+    "serve": "node scripts/serve.mjs",
+    "package": "node scripts/package.mjs"
+  },
+  "dependencies": { "chess.js": "1.4.0", "stockfish": "19.0.1" },
+  "devDependencies": { "esbuild": "0.28.2", "web-ext": "10.8.0", "fflate": "0.8.2", "jsdom": "26.1.0" },
+  "engines": { "node": ">=22" }
+}
