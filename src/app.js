@@ -129,7 +129,7 @@ function renderLines() {
   if(extension && sourceTab && $('overlay').checked) browser.tabs.sendMessage(sourceTab,{type:'OK_ARROWS',fen:currentFen(),moves:infos.map(i=>({uci:i.pv[0],score:scoreLabel(i),quality:i.quality})),candidates:gradedInfos().map(i=>({uci:i.pv[0],quality:i.quality,score:scoreLabel(i)}))}).catch(()=>{});
 }
 async function ensureEngine() {
-  $('engine-state').textContent = engineMode === 'full' && engine.mode !== 'full' ? 'Загрузка Full (~94 МБ)…' : 'Запуск Stockfish…';
+  $('engine-state').textContent = engineMode === 'full' && engine.mode !== 'full' ? 'Загрузка Full (99,2 МБ)…' : 'Запуск Stockfish…';
   await engine.load(engineMode);
   const hash = Number($('hash').value); if(engine.hash !== hash) { await engine.stop(); engine.hash = hash; engine.send(`setoption name Hash value ${hash}`); }
 }
@@ -246,7 +246,7 @@ async function connectTab(){
 }
 async function captureTab(){
   if(!sourceTab||captureBusy)return;captureBusy=true;
-  try{const data=await browser.tabs.sendMessage(sourceTab,{type:'OK_CAPTURE',turn:$('site-turn').value});if(data.error)throw new Error(data.error);const c=new Chess(data.fen);if(c.fen()!==currentFen()){game=c;cursor=0;positionChanged();}$('capture-meta').textContent=data.exact?'Полная FEN из записи ходов.':'Расположение фигур. '+(data.turnInferred?'Очередь определена из ходов. ':'Очередь задана вручную. ')+'Рокировка и взятие на проходе не восстановлены.';if(!data.exact&&!data.turnInferred&&$('site-turn').value==='auto')notice('Не удалось определить очередь хода. Выберите её в настройке «Ход на сайте».');}catch(e){$('follow-tab').checked=false;clearInterval(followTimer);notice('Доска сайта: '+e.message,true);}finally{captureBusy=false;}
+  try{const data=await browser.tabs.sendMessage(sourceTab,{type:'OK_CAPTURE',turn:$('site-turn').value});if(data.error)throw new Error(data.error);const c=new Chess(data.fen);if(c.fen()!==currentFen()){game=c;cursor=0;positionChanged();}else if(lines.size)renderLines();$('capture-meta').textContent=data.exact?'Полная FEN из записи ходов.':'Расположение фигур. '+(data.turnInferred?'Очередь определена из ходов. ':'Очередь задана вручную. ')+'Рокировка и взятие на проходе не восстановлены.';if(!data.exact&&!data.turnInferred&&$('site-turn').value==='auto')notice('Не удалось определить очередь хода. Выберите её в настройке «Ход на сайте».');}catch(e){$('follow-tab').checked=false;clearInterval(followTimer);notice('Доска сайта: '+e.message,true);}finally{captureBusy=false;}
 }
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 document.querySelectorAll('[data-engine]').forEach(b=>b.addEventListener('click',()=>{cancelReview();generation++;clearTimeout(analysisTimer);engine.destroy();engineMode=b.dataset.engine;storage.set('engine',engineMode);document.querySelectorAll('[data-engine]').forEach(x=>x.classList.toggle('selected',x===b));$('engine-caption').textContent=engineMode==='lite'?'Быстрый старт. Компактная нейросеть.':'Полная нейросеть. Более сильный анализ.';analyzePosition();}));
@@ -268,7 +268,12 @@ if(extension){$('extension-controls').hidden=false;$('connect-tab').addEventList
 window.addEventListener('pagehide',()=>{engine.destroy();clearInterval(followTimer);if(extension&&sourceTab)browser.tabs.sendMessage(sourceTab,{type:'OK_CLEAR_ARROWS'}).catch(()=>{});});
 renderContext();renderBoard();
 (async()=>{
+  const requestedMode=new URLSearchParams(location.search).get('engine')||storage.get('engine','lite');
+  engineMode=requestedMode==='full'?'full':'lite';
   try{const sizes=await(await fetch('./engines/sizes.json')).json();for(const mode of ['lite','full'])$(mode+'-size').textContent=sizes[mode]?(sizes[mode]/1000000).toLocaleString('ru-RU',{maximumFractionDigits:1})+' МБ':'нет в Lite ZIP';if(!sizes.full){const button=document.querySelector('[data-engine="full"]');button.disabled=true;button.title='Установите Full ZIP, чтобы использовать полную нейросеть';}}catch{}
+  if(document.querySelector('[data-engine="full"]').disabled)engineMode='lite';
+  document.querySelectorAll('[data-engine]').forEach(button=>button.classList.toggle('selected',button.dataset.engine===engineMode));
+  $('engine-caption').textContent=engineMode==='full'?'Полная нейросеть. Более сильный анализ.':'Быстрый старт. Компактная нейросеть.';
   if(extension){const {pendingCapture}=await browser.storage.local.get('pendingCapture');if(pendingCapture){await browser.storage.local.remove('pendingCapture');try{game=new Chess(pendingCapture.fen);sourceTab=pendingCapture.tabId;cursor=0;positionChanged();if(!pendingCapture.exact)notice('Позиция прочитана с сайта. Проверьте очередь хода и права рокировки через FEN.');}catch(e){notice(e.message,true);}}}
   analysisTimer=setTimeout(analyzePosition,300);
 })();
